@@ -19,21 +19,17 @@ void  bnpc_vector_erase  (struct bnpc_vector* vector, bnp_size index);
 void* bnpc_vector_getp   (struct bnpc_vector* vector, bnp_size index);
 
 BNP_FORCE_INLINE void bnpc_vector_push(struct bnpc_vector* vector, void* element) {
-  // hopefully this flattens out in assembly
   bnpc_vector_insert(vector, element, vector->count);
 }
 
 BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element) {
-  // hopefully this flattens out in assembly
   bnpc_vector_remove(vector, element, vector->count - 1);
 }
 
 #ifdef BNPC_VECTOR_IMPLEMENTATION
   #include <assert.h>
   #include <string.h>
-  // static void bnpc_vector__expand (struct bnpc_vector* vector);
-  // static void bnpc_vector__shrink (struct bnpc_vector* vector);
-  
+
   static void bnpc_vector__expand(struct bnpc_vector* vector) {
     // This implementation uses the shrink formula: f(n - 1) = f(n) / 2
     // and the growth formula f(n + 1) = f(n) * 2; Some implementations

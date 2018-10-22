@@ -59,18 +59,18 @@
 // enables implementations of collections
 #ifdef BNP_COLLECTION_IMPLEMENTATION
   #define BNPC_HASHMAP_IMPLEMENTATION // completed
-  #define BNPC_LIST_IMPLEMENTATION    // not-started
-  #define BNPC_QUEUE_IMPLEMENTATION   // unneeded
-  #define BNPC_STACK_IMPLEMENTATION   // unneeded
+  #define BNPC_LIST_IMPLEMENTATION    // started
+  #define BNPC_QUEUE_IMPLEMENTATION   // unneeded (deps: vector)
+  #define BNPC_STACK_IMPLEMENTATION   // unneeded (deps: vector)
   #define BNPC_VECTOR_IMPLEMENTATION  // completed
 #endif
 
 // enables debugging for collections
 #ifdef BNP_COLLECTION_DEBUG
-  #define BNPC_HASHMAP_DEBUG // unneeded
-  #define BNPC_LIST_DEBUG    // not-implemented
-  #define BNPC_QUEUE_DEBUG   // unneeded
-  #define BNPC_STACK_DEBUG   // unneeded
+  #define BNPC_HASHMAP_DEBUG // unneeded (deps: list, vector)
+  #define BNPC_LIST_DEBUG    // started
+  #define BNPC_QUEUE_DEBUG   // unneeded (deps: vector)
+  #define BNPC_STACK_DEBUG   // unneeded (deps: vector)
   #define BNPC_VECTOR_DEBUG  // completed
 #endif
 
@@ -80,7 +80,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 BNP_FORCE_INLINE void* bnp_alloc(const bnp_size size) {
   void* pointer = malloc(size);
   assert(pointer);

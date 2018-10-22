@@ -15,16 +15,16 @@ struct bnpc_hashmap {
   bnp_int32 (*func_comp)(void* key_a, void* key_b); // comparison function
 };
 
-void                bnpc_hashmap_init         (struct bnpc_hashmap* hashmap, bnp_size k_size, bnp_size v_size, bnp_size reserved, bnp_size (*func_hash)(void* key), bnp_int32 (*func_comp)(void* key_a, void* key_b));
-void                bnpc_hashmap_free         (struct bnpc_hashmap* hashmap);
-void*               bnpc_hashmap_getp         (struct bnpc_hashmap* hashmap, void* key);
-void                bnpc_hashmap__insert      (struct bnpc_hashmap* hashmap, void* key, void* value);
-bnp_int32           bnpc_hashmap__remove      (struct bnpc_hashmap* hashmap, void* key, void* value);
-bnp_int32           bnpc_hashmap__erase       (struct bnpc_hashmap* hashmap, void* key);
-void                bnpc_hashmap__resize      (struct bnpc_hashmap* hashmap);
-struct bnpc_list*   bnpc_hashmap__getBucket   (struct bnpc_hashmap* hashmap, void* key);
-void                bnpc_hashmap__initBuckets (struct bnpc_vector* buckets, bnp_size size, bnp_size capacity);
-void                bnpc_hashmap__freeBuckets (struct bnpc_vector* buckets);
+void              bnpc_hashmap_init         (struct bnpc_hashmap* hashmap, bnp_size k_size, bnp_size v_size, bnp_size reserved, bnp_size (*func_hash)(void* key), bnp_int32 (*func_comp)(void* key_a, void* key_b));
+void              bnpc_hashmap_free         (struct bnpc_hashmap* hashmap);
+void*             bnpc_hashmap_getp         (struct bnpc_hashmap* hashmap, void* key);
+void              bnpc_hashmap__insert      (struct bnpc_hashmap* hashmap, void* key, void* value);
+bnp_int32         bnpc_hashmap__remove      (struct bnpc_hashmap* hashmap, void* key, void* value);
+bnp_int32         bnpc_hashmap__erase       (struct bnpc_hashmap* hashmap, void* key);
+void              bnpc_hashmap__resize      (struct bnpc_hashmap* hashmap);
+struct bnpc_list* bnpc_hashmap__getBucket   (struct bnpc_hashmap* hashmap, void* key);
+void              bnpc_hashmap__initBuckets (struct bnpc_vector* buckets, bnp_size size, bnp_size capacity);
+void              bnpc_hashmap__freeBuckets (struct bnpc_vector* buckets);
 
 BNP_FORCE_INLINE void bnpc_hashmap_insert(struct bnpc_hashmap* hashmap, void* key, void* value) {
   // bnpc_hashmap_* are the 'public' facing functions. These functions may
@@ -85,8 +85,9 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
 
   void* bnpc_hashmap_getp(struct bnpc_hashmap* hashmap, void* key) {
     struct bnpc_list* bucket = bnpc_hashmap__getBucket(hashmap, key);
-    for (bnp_size i = 0; i < bucket->count; i++) {
-      struct bnpc_node* node = bnpc_list_getp(bucket, i);
+    struct bnpc_node* beg = bucket->beg;
+    struct bnpc_node* end = bucket->end;
+    for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
       if (!hashmap->func_comp(node->elem, key)) {
         return node->elem + hashmap->k_size;
       }
@@ -96,8 +97,9 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
   
   bnp_int32 bnpc_hashmap_contains(struct bnpc_hashmap* hashmap, void* key) {
     struct bnpc_list* bucket = bnpc_hashmap__getBucket(hashmap, key);
-    for (bnp_size i = 0; i < bucket->count; i++) {
-      struct bnpc_node* node = bnpc_list_getp(bucket, i);
+    struct bnpc_node* beg = bucket->beg;
+    struct bnpc_node* end = bucket->end;
+    for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
       if (!hashmap->func_comp(node->elem, key)) {
         return 1;
       }
@@ -107,11 +109,12 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
   
   bnp_int32 bnpc_hashmap__remove(struct bnpc_hashmap* hashmap, void* key, void* value) {
     struct bnpc_list* bucket = bnpc_hashmap__getBucket(hashmap, key);
-    for (bnp_size i = 0; i < bucket->count; i++) {
-      struct bnpc_node* node = bnpc_list_getp(bucket, i);
+    struct bnpc_node* beg = bucket->beg;
+    struct bnpc_node* end = bucket->end;
+    for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
       if (!hashmap->func_comp(node->elem, key)) {
         memcpy(value, node->elem + hashmap->k_size, hashmap->v_size);
-        bnpc_list_remove(bucket, node);
+        bnpc_list_erase(bucket, node);
         hashmap->element_count--;
         return 1;
       }
@@ -121,10 +124,11 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
 
   bnp_int32 bnpc_hashmap__erase(struct bnpc_hashmap* hashmap, void* key) {
     struct bnpc_list* bucket = bnpc_hashmap__getBucket(hashmap, key);
-    for (bnp_size i = 0; i < bucket->count; i++) {
-      struct bnpc_node* node = bnpc_list_getp(bucket, i);
+    struct bnpc_node* beg = bucket->beg;
+    struct bnpc_node* end = bucket->end;
+    for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
       if (!hashmap->func_comp(node->elem, key)) {
-        bnpc_list_remove(bucket, node);
+        bnpc_list_erase(bucket, node);
         hashmap->element_count--;
         return 1;
       }
@@ -173,9 +177,10 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
     memcpy(buffer + BNPC_HASHMAP_VAL_OFFSET(hashmap), value, hashmap->v_size);
 
     struct bnpc_list* bucket = bnpc_hashmap__getBucket(hashmap, key);
+    struct bnpc_node* beg = bucket->beg;
+    struct bnpc_node* end = bucket->end;
     // iterates through the elements
-    for (bnp_size i = 0; i < bucket->count; i++) {
-      struct bnpc_node* node = bnpc_list_getp(bucket, i);
+    for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
       if (!hashmap->func_comp(node->elem, key)) {
         // An element with the same key has been located. In these cases,
         // the element is updated with the new value; this should be the
@@ -222,14 +227,15 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
       bnpc_hashmap__initBuckets(&hashmap->buckets, size, capacity);
 
       for (bnp_size i = 0; i < buckets.count; i++) {
-        struct bnpc_vector* bucket = bnpc_vector_getp(&buckets, i);
-        for (bnp_size j = 0; j < bucket->count; j++) {
+        struct bnpc_list* bucket = bnpc_vector_getp(&buckets, i);
+        struct bnpc_node* beg = bucket->beg;
+        struct bnpc_node* end = bucket->end;
+        for(struct bnpc_node* node = beg->next; node != end; node = node->next) {
           // Retrieves a pointer to the element; since keys and values are
           // packed contiguously, the keys and values can be found by
-        // offseting the element pointer.
-          bnp_byte* element = bnpc_vector_getp(bucket, j);
-          void* key   = element + BNPC_HASHMAP_KEY_OFFSET(hashmap);
-          void* value = element + BNPC_HASHMAP_VAL_OFFSET(hashmap);
+          // offseting the element pointer.
+          void* key   = node->elem + BNPC_HASHMAP_KEY_OFFSET(hashmap);
+          void* value = node->elem + BNPC_HASHMAP_VAL_OFFSET(hashmap);
           bnpc_hashmap__insert(hashmap, key, value);
         }
       }

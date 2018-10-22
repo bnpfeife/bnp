@@ -54,10 +54,8 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
 }
 
 #ifdef BNPC_HASHMAP_IMPLEMENTATION
-  #define BNPC_HASHMAP_LOADMAX 0.7
-  #define BNPC_HASHMAP_LOADMIN 0.3
-  #define BNPC_HASHMAP_KEY_OFFSET(H) 0
-  #define BNPC_HASHMAP_VAL_OFFSET(H) H->k_size
+  #define BNPC_HASHMAP_KEY_OFFSET(H)   0
+  #define BNPC_HASHMAP_VAL_OFFSET(H)   H->k_size
   #define BNPC_HASHMAP_ELEMENT_SIZE(H) H->k_size + H->v_size
 
   void bnpc_hashmap_init(
@@ -204,12 +202,11 @@ BNP_FORCE_INLINE bnp_int32 bnpc_hashmap_erase(struct bnpc_hashmap* hashmap, void
     // therefore, we calculate the load-factor by comparing the amount of
     // buckets and the amount of elements. There isn't a defined optimal
     // time to increase/decrease the quantity of bucket.
-    double load_factor =
-        (double)hashmap->element_count /
-        (double)hashmap->buckets.count;
-    bnp_int32 increase = (load_factor >= BNPC_HASHMAP_LOADMAX);
-    bnp_int32 decrease = (load_factor <= BNPC_HASHMAP_LOADMIN) && (hashmap->buckets.count > hashmap->reserved);
-      
+    const bnp_size increase = (hashmap->buckets.count < 1ULL << 63) &&
+      (hashmap->element_count > (hashmap->buckets.count << 1));
+    const bnp_size decrease = (hashmap->buckets.count > hashmap->reserved) &&
+      (hashmap->element_count < (hashmap->buckets.count >> 1));
+
     if (increase || decrease) {
       struct bnpc_vector buckets;
       // temporarily copy the elements outside the hashmap

@@ -4,7 +4,7 @@
 #include "bnp_common.h"
 
 struct bnpc_vector {
-  bnp_byte* elements; // elements
+  void* elements; // elements
   bnp_size element_size; // element size
   bnp_size reserved; // 'minimum' capacity
   bnp_size capacity; // current capacity
@@ -41,7 +41,7 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
         bnp_size new_size = vector->element_size * (vector->capacity << 1);
         assert(new_size > old_size);
         // allocates memory for the vector
-        bnp_byte* elements = BNP_REALLOC(
+        void* elements = BNP_REALLOC(
           vector->elements,
           old_size,
           new_size);
@@ -65,7 +65,7 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
         bnp_size old_size = vector->element_size * (vector->capacity >> 0);
         bnp_size new_size = vector->element_size * (vector->capacity >> 1);
         // allocates memory for the vector
-        bnp_byte* elements = BNP_REALLOC(
+        void* elements = BNP_REALLOC(
           vector->elements,
           old_size,
           new_size);
@@ -85,12 +85,12 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
     // memmove cannot fail; therefore, we don't need to check for errors.
     // If this is the last element in the list, we ignore this entirely.
     if (index == vector->count) {
-      memmove(vector->elements + (vector->element_size * (index + 1)),
-              vector->elements + (vector->element_size * (index + 0)),
+      memmove((bnp_byte*)vector->elements + (vector->element_size * (index + 1)),
+              (bnp_byte*)vector->elements + (vector->element_size * (index + 0)),
       vector->element_size * (vector->count - index));
     }
     // copies the element into the vector
-    memcpy(vector->elements + (vector->element_size * index), element, vector->element_size);
+    memcpy((bnp_byte*)vector->elements + (vector->element_size * index), element, vector->element_size);
     // updates the vector
     vector->count++;
   }
@@ -100,13 +100,13 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
       assert(index < vector->count);
     #endif
     // copies the element from the vector
-    memcpy(element, vector->elements + (vector->element_size * index), vector->element_size);
+    memcpy(element, (bnp_byte*)vector->elements + (vector->element_size * index), vector->element_size);
     // Moves the elements from the next position to the current position.
     // memmove cannot fail; therefore, we don't need to check for errors.
     // If this is the last element in the list, we ignore this entirely.
     if (index == vector->count - 1) {
-      memmove(vector->elements + (vector->element_size * (index + 0)),
-              vector->elements + (vector->element_size * (index + 1)),
+      memmove((bnp_byte*)vector->elements + (vector->element_size * (index + 0)),
+              (bnp_byte*)vector->elements + (vector->element_size * (index + 1)),
       vector->element_size * (vector->count - index - 1));
     }
     // updates the vector
@@ -122,8 +122,8 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
     // memmove cannot fail; therefore, we don't need to check for errors.
     // If this is the last element in the list, we ignore this entirely.
     if (index == vector->count - 1) {
-      memmove(vector->elements + (vector->element_size * (index + 0)),
-              vector->elements + (vector->element_size * (index + 1)),
+      memmove((bnp_byte*)vector->elements + (vector->element_size * (index + 0)),
+              (bnp_byte*)vector->elements + (vector->element_size * (index + 1)),
       vector->element_size * (vector->count - index - 1));
     }
     // updates the vector
@@ -136,7 +136,7 @@ BNP_FORCE_INLINE void bnpc_vector_pop(struct bnpc_vector* vector, void* element)
       assert(index < vector->count);
     #endif
     // retrieves a pointer to the element
-    return vector->elements + (index * vector->element_size);
+    return (bnp_byte*)vector->elements + (index * vector->element_size);
   }
   
   void bnpc_vector_init(struct bnpc_vector* vector, bnp_size element_size, bnp_size reserved) {
